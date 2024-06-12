@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Combinada</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <style>
+        .wistia_responsive_wrapper > div {
+            padding: 0 !important;
+            position: static !important;
+        }
+        @media screen and (min-width: 650px) {
+            .wistia_responsive_wrapper > div {
+                padding: 56.25% 0 0 0;
+                position: relative;
+            }
+        }
+        #play-button-video {
+            cursor: pointer !important;
+        }
+        .mobile .wistia_responsive_wrapper #play-button-video {
+            display: block !important;
+        }
+        .video-absolute {
+            height: 100% !important;
+        }
+        .yt-thumbnail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 102;
+            text-align: center;
+        }
+        .youtube-overlay {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            z-index: 100;
+            width: 36%;
+            height: 30%;
+        }
+        .edge-to-edge #content .wrapper {
+            overflow: hidden;
+        }
+        .edge-to-edge .video-box {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            height: auto;
+            display: block;
+            border: 5px solid #ffffff;
+            border-radius: 10px;
+        }
+        .mobile .video-wrapper {
+            overflow: hidden;
+        }
+        .mobile .video-box {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            height: auto;
+            display: block;
+            border: 5px solid #ffffff;
+            border-radius: 10px;
+        }
+        .bigThumbnail {
+            min-height: 50vh;
+            position: relative;
+        }
+        .bigThumbnail .yt-thumbnail {
+            background-size: contain;
+            background-position: center;
+        }
+        @media screen and (orientation:landscape) {
+            .bigThumbnail {
+                height: 100%;
+            }
+            .bigThumbnail .yt-thumbnail {
+                background-size: cover;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '298555674854300');
+        fbq('track', 'PageView');
+    </script>
+    <noscript>
+        <img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=298555674854300&ev=PageView&noscript=1"/>
+    </noscript>
+
+    <!-- jQuery Scripts -->
+    <script>
+        $(document).ready(function() {
+            $('.atrasado').hide();
+            setTimeout(function() {
+                $('.atrasado').show();
+            }, 1);
+            
+            $('.escond').hide();
+            setTimeout(function() {
+                $('.escond').fadeIn('slow');
+            }, 30 * 1000); // 30 segundos de atraso
+        });
+
+        var player;
+        var firstTimePlaying = true;
+        var isVideoLoaded = false;
+        var playerState;
+
+        (function() {
+            $('#video').load(function() {
+                player = new YT.Player('video', {
+                    width: '100%',
+                    events: {
+                        'onReady': function(event) {
+                            $(document).trigger('player.video.loaded');
+                            isVideoLoaded = true;
+                            player.unMute();
+                        },
+                        'onStateChange': function(event) {
+                            playerState = event;
+                            if (event.data === YT.PlayerState.PLAYING) {
+                                $(document).trigger('player.video.started');
+                                $('.youtube-overlay').css('display', 'block');
+                                $('.play-text').fadeOut(200);
+                                if ($('body, html').width() > 1000 && firstTimePlaying === false) {
+                                    $('.new-video-container').addClass('new-video-fullscreen');
+                                }
+                            }
+                            if (event.data === YT.PlayerState.PAUSED) {
+                                $(document).trigger('player.video.paused');
+                                $('.video-pause').show();
+                                $('.new-video-container').removeClass('new-video-fullscreen');
+                                $('.new-video-container .video-border').height('auto');
+                                $('.new-video-container .video-border, .new-video-container, .new-video-container .video, .new-video-container iframe').css('style', '');
+                            }
+                        }
+                    }
+                });
+            });
+
+            $(document).on("player.video.started", function() {
+                $('#play-button-video').css('background', 'none');
+                $('.continue-text').hide();
+                videoPaused = false;
+            });
+
+            $(document).on("player.video.paused", function() {
+                videoPaused = true;
+                $('.video-paused-btn').show();
+                var videoOffsetBottom = $('.video-absolute').offset().top + $('.video-absolute').height() - 20;
+                if ($(window).scrollTop() < videoOffsetBottom) {
+                    $('.continue-text').show();
+                }
+                $('body').removeClass('full-body-video');
+                countWrapperHeight();
+            });
+
+            function fullScreenVideo(that) {
+                var video = that.find('video').get(0);
+                $('.unmute-text').hide();
+                if (btnSoundClick === true) {
+                    $('body').removeClass('full-body-video');
+                    player.pauseVideo();
+                    btnSoundClick = false;
+                }
+                if (videoPaused === true) {
+                    countWrapperHeight();
+                    $('.continue-text').show();
+                } else {
+                    $('body').addClass('full-body-video');
+                    countWrapperHeight();
+                    $('.video-paused-btn, .btn-sound-on, .continue-text').hide();
+                    if ($('body').hasClass('mobile')) {
+                        $('html, body').animate({scrollTop: -100}, 100);
+                    } else {
+                        window.scroll(0, 0);
+                    }
+                }
+            }
+
+            function countWrapperHeight() {
+                if ($('body').hasClass('full-body-video')) {
+                    var videoHei = $('.wistia-video-container').height() - $('#video-box .wrapper').offset().top;
+                    $('#video-box .wrapper').height(videoHei);
+                } else {
+                    $('#video-box .wrapper').height('auto');
+                }
+            }
+        })();
+    </script>
+    
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Content from elementor-1585-2022-08-18.json -->
+        <p>Este site não é afiliado ao Facebook ou a qualquer entidade do Facebook. Depois que você sair do Facebook, a responsabilidade não é deles e sim do nosso site.</p>
+        
+        <!-- Content from elementor-1594-2022-08-18.json -->
+        <div style="background: #0E0E0E url('https://lindadecor.com/wp-content/uploads/2022/07/bg-3.jpg') center left no-repeat fixed; background-size: cover; padding: 50px 0;">
+            <p>Fazemos todos os esforços para indicar claramente e mostrar todas as provas do produto e usamos resultados reais.</p>
+        </div>
+
+        <!-- Content from elementor-2023-2022-08-18.json -->
+        <div>
+            <div class="wistia_responsive_wrapper" style="height: 100%;"><div>
+                <div id="play-button-video"></div>
+                <div class="yt-thumbnail"></div>
+                <div class="youtube-overlay"></div>
+            </div></div>
+        </div>
+    </div>
+</body>
+</html>
